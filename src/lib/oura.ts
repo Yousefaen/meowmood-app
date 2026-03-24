@@ -13,50 +13,49 @@ import {
   mockSleepData,
 } from './mockData';
 
-const BASE_URL = 'https://api.ouraring.com/v2';
+/**
+ * Fetch data from our Vercel API proxy (which holds the OAuth token server-side).
+ * Falls back to mock data when running locally without the proxy.
+ */
+async function ouraProxy<T>(endpoint: string, start: string, end: string): Promise<T> {
+  const params = new URLSearchParams({ endpoint, start, end });
+  const res = await fetch(`/api/oura/data?${params}`);
 
-// Returns the PAT, or an empty string when the env var is not configured.
-function getPat(): string {
-  return import.meta.env.VITE_OURA_PAT ?? '';
-}
-
-// Shared fetch helper — throws on non-OK responses.
-async function ouraFetch<T>(path: string): Promise<T> {
-  const pat = getPat();
-  if (!pat) throw new Error('VITE_OURA_PAT is not set');
-
-  const response = await fetch(`${BASE_URL}${path}`, {
-    headers: {
-      Authorization: `Bearer ${pat}`,
-      'Content-Type': 'application/json',
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Oura API error: ${response.status} ${response.statusText}`);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || `Proxy error: ${res.status}`);
   }
 
-  return response.json() as Promise<T>;
+  return res.json() as Promise<T>;
+}
+
+/**
+ * Check if the Oura ring is connected (token exists on server).
+ */
+export async function checkOuraStatus(): Promise<{ connected: boolean; expired?: boolean }> {
+  try {
+    const res = await fetch('/api/oura/status');
+    return await res.json();
+  } catch {
+    return { connected: false };
+  }
+}
+
+/**
+ * Get the URL to start the OAuth authorization flow.
+ */
+export function getAuthorizeUrl(): string {
+  return '/api/oura/authorize';
 }
 
 // ─── Public API functions ────────────────────────────────────────────────────
 
-/**
- * Fetch heart rate samples for a datetime range.
- * The Oura v2 heartrate endpoint uses start_datetime / end_datetime (ISO 8601).
- */
 export async function fetchHeartRate(
   startDate: string,
   endDate: string
 ): Promise<OuraHeartRate[]> {
   try {
-    const params = new URLSearchParams({
-      start_datetime: startDate,
-      end_datetime: endDate,
-    });
-    const data = await ouraFetch<{ data: OuraHeartRate[] }>(
-      `/usercollection/heartrate?${params}`
-    );
+    const data = await ouraProxy<{ data: OuraHeartRate[] }>('heartrate', startDate, endDate);
     return data.data;
   } catch (err) {
     console.warn('[oura] fetchHeartRate fell back to mock data:', err);
@@ -64,22 +63,12 @@ export async function fetchHeartRate(
   }
 }
 
-/**
- * Fetch daily activity records for a date range.
- * Uses start_date / end_date (YYYY-MM-DD).
- */
 export async function fetchDailyActivity(
   startDate: string,
   endDate: string
 ): Promise<OuraDailyActivity[]> {
   try {
-    const params = new URLSearchParams({
-      start_date: startDate,
-      end_date: endDate,
-    });
-    const data = await ouraFetch<{ data: OuraDailyActivity[] }>(
-      `/usercollection/daily_activity?${params}`
-    );
+    const data = await ouraProxy<{ data: OuraDailyActivity[] }>('daily_activity', startDate, endDate);
     return data.data;
   } catch (err) {
     console.warn('[oura] fetchDailyActivity fell back to mock data:', err);
@@ -87,22 +76,12 @@ export async function fetchDailyActivity(
   }
 }
 
-/**
- * Fetch daily readiness records for a date range.
- * Uses start_date / end_date (YYYY-MM-DD).
- */
 export async function fetchDailyReadiness(
   startDate: string,
   endDate: string
 ): Promise<OuraDailyReadiness[]> {
   try {
-    const params = new URLSearchParams({
-      start_date: startDate,
-      end_date: endDate,
-    });
-    const data = await ouraFetch<{ data: OuraDailyReadiness[] }>(
-      `/usercollection/daily_readiness?${params}`
-    );
+    const data = await ouraProxy<{ data: OuraDailyReadiness[] }>('daily_readiness', startDate, endDate);
     return data.data;
   } catch (err) {
     console.warn('[oura] fetchDailyReadiness fell back to mock data:', err);
@@ -110,22 +89,12 @@ export async function fetchDailyReadiness(
   }
 }
 
-/**
- * Fetch sleep session records for a date range.
- * Uses start_date / end_date (YYYY-MM-DD).
- */
 export async function fetchSleep(
   startDate: string,
   endDate: string
 ): Promise<OuraSleep[]> {
   try {
-    const params = new URLSearchParams({
-      start_date: startDate,
-      end_date: endDate,
-    });
-    const data = await ouraFetch<{ data: OuraSleep[] }>(
-      `/usercollection/sleep?${params}`
-    );
+    const data = await ouraProxy<{ data: OuraSleep[] }>('sleep', startDate, endDate);
     return data.data;
   } catch (err) {
     console.warn('[oura] fetchSleep fell back to mock data:', err);
@@ -135,15 +104,6 @@ export async function fetchSleep(
 
 // ─── Mapping helpers ─────────────────────────────────────────────────────────
 
-/**
- * Map Oura sleep score + duration into a descriptive sleep stage string.
- *
- * Logic:
- *   - No duration recorded          → "active"
- *   - Score ≥ 80 (high quality)     → "deep sleep"
- *   - Score ≥ 60 (moderate quality) → "light sleep"
- *   - Score < 60 or null            → "resting"
- */
 function mapSleepStage(sleep: OuraSleep | undefined): string {
   if (!sleep || (sleep.total_sleep_duration ?? 0) === 0) return 'active';
   const score = sleep.score ?? 0;
@@ -154,14 +114,9 @@ function mapSleepStage(sleep: OuraSleep | undefined): string {
 
 // ─── Composite function ───────────────────────────────────────────────────────
 
-/**
- * Fetch all relevant Oura data for today and combine it into a PetStatus.
- * Falls back entirely to mock data if anything goes wrong.
- */
 export async function fetchPetStatus(): Promise<PetStatus> {
   try {
     const today = new Date().toISOString().split('T')[0];
-    // Heart rate endpoint expects ISO 8601 datetimes.
     const startDatetime = `${today}T00:00:00`;
     const endDatetime = `${today}T23:59:59`;
 
@@ -172,17 +127,14 @@ export async function fetchPetStatus(): Promise<PetStatus> {
       fetchSleep(today, today),
     ]);
 
-    // Use the most recent heart rate sample (last element in the array).
     const latestHr = heartRates.length > 0
       ? heartRates[heartRates.length - 1]
       : null;
 
-    // Use the first (and typically only) record for the day.
     const activity = activities[0] ?? null;
     const readiness = readinesses[0] ?? null;
     const sleep = sleeps[0] ?? undefined;
 
-    // Body temperature: cat baseline 101.5 °F + Oura temperature deviation.
     const tempDeviation = readiness?.temperature_deviation ?? 0;
     const bodyTemperature = parseFloat((101.5 + tempDeviation).toFixed(2));
 
@@ -192,7 +144,7 @@ export async function fetchPetStatus(): Promise<PetStatus> {
       activityScore: activity?.score ?? null,
       todaySteps: activity?.steps ?? null,
       sleepStage: mapSleepStage(sleep),
-      lastFed: null, // Populated elsewhere (Supabase feeding logs)
+      lastFed: null,
       isResting: (activity?.score ?? 100) < 50,
     };
   } catch (err) {

@@ -1,8 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import HealthRing from '@/components/dashboard/HealthRing';
 import StatusCard from '@/components/dashboard/StatusCard';
 import AlertBanner, { type Alert } from '@/components/dashboard/AlertBanner';
+import { fetchPetStatus, checkOuraStatus, getAuthorizeUrl } from '@/lib/oura';
 import type { PetStatus } from '@/types';
 
 interface MetricCard {
@@ -20,12 +23,25 @@ export default function Dashboard() {
   const [temperature, setTemperature] = useState(101.8);
   const [activityScore, setActivityScore] = useState(72);
   const [steps, setSteps] = useState(4823);
+  const [ouraConnected, setOuraConnected] = useState<boolean | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  // Suppress unused-variable warnings for setters that will be wired up later
-  void setHeartRate;
-  void setTemperature;
-  void setActivityScore;
-  void setSteps;
+  // Check Oura connection status + fetch data on mount
+  useEffect(() => {
+    checkOuraStatus().then((status) => {
+      setOuraConnected(status.connected && !status.expired);
+      if (status.connected && !status.expired) {
+        setLoading(true);
+        fetchPetStatus().then((pet) => {
+          if (pet.currentHeartRate !== null) setHeartRate(pet.currentHeartRate);
+          if (pet.bodyTemperature !== null) setTemperature(pet.bodyTemperature);
+          if (pet.activityScore !== null) setActivityScore(pet.activityScore);
+          if (pet.todaySteps !== null) setSteps(pet.todaySteps);
+          setLoading(false);
+        });
+      }
+    });
+  }, []);
 
   const petStatus: PetStatus = {
     currentHeartRate: heartRate,
@@ -109,6 +125,30 @@ export default function Dashboard() {
           <p className="text-sm text-muted-foreground mt-0.5">Live health overview</p>
         </div>
       </div>
+
+      {/* Oura connection status */}
+      {ouraConnected === false && (
+        <Card className="border-dashed">
+          <CardContent className="flex items-center justify-between py-3">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">⌚</span>
+              <div>
+                <p className="text-sm font-medium">Connect Oura Ring</p>
+                <p className="text-xs text-muted-foreground">Link real health data</p>
+              </div>
+            </div>
+            <a href={getAuthorizeUrl()}>
+              <Button size="sm">Connect</Button>
+            </a>
+          </CardContent>
+        </Card>
+      )}
+      {ouraConnected === true && (
+        <Badge variant="secondary" className="gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
+          Oura Ring Connected {loading && '· Syncing...'}
+        </Badge>
+      )}
 
       {/* Alert banner — only shown when alerts exist */}
       <AlertBanner alerts={alerts} />
