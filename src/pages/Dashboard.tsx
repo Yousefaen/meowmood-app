@@ -26,23 +26,35 @@ export default function Dashboard() {
   const [steps, setSteps] = useState(4823);
   const [ouraConnected, setOuraConnected] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(false);
+  const [lastSynced, setLastSynced] = useState<Date | null>(null);
 
-  // Check Oura connection status + fetch data on mount
+  // Fetch live data from Oura
+  function syncOuraData() {
+    setLoading(true);
+    fetchPetStatus().then((pet) => {
+      if (pet.currentHeartRate !== null) setHeartRate(pet.currentHeartRate);
+      if (pet.bodyTemperature !== null) setTemperature(pet.bodyTemperature);
+      if (pet.activityScore !== null) setActivityScore(pet.activityScore);
+      if (pet.todaySteps !== null) setSteps(pet.todaySteps);
+      setLastSynced(new Date());
+      setLoading(false);
+    });
+  }
+
+  // Check connection on mount, then poll every 5 minutes
   useEffect(() => {
     checkOuraStatus().then((status) => {
-      setOuraConnected(status.connected && !status.expired);
-      if (status.connected && !status.expired) {
-        setLoading(true);
-        fetchPetStatus().then((pet) => {
-          if (pet.currentHeartRate !== null) setHeartRate(pet.currentHeartRate);
-          if (pet.bodyTemperature !== null) setTemperature(pet.bodyTemperature);
-          if (pet.activityScore !== null) setActivityScore(pet.activityScore);
-          if (pet.todaySteps !== null) setSteps(pet.todaySteps);
-          setLoading(false);
-        });
-      }
+      const connected = status.connected && !status.expired;
+      setOuraConnected(connected);
+      if (connected) syncOuraData();
     });
-  }, []);
+
+    const interval = setInterval(() => {
+      if (ouraConnected) syncOuraData();
+    }, 5 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, [ouraConnected]);
 
   const petStatus: PetStatus = {
     currentHeartRate: heartRate,
@@ -143,10 +155,17 @@ export default function Dashboard() {
         </Card>
       )}
       {ouraConnected === true && (
-        <Badge variant="secondary" className="gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
-          Oura Ring Connected {loading && '· Syncing...'}
-        </Badge>
+        <div className="flex items-center justify-between">
+          <Badge variant="secondary" className="gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
+            Oura Ring Connected {loading && '· Syncing...'}
+          </Badge>
+          {lastSynced && (
+            <span className="text-xs text-muted-foreground">
+              Last synced {lastSynced.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </span>
+          )}
+        </div>
       )}
 
       {/* Alert banner — only shown when alerts exist */}
