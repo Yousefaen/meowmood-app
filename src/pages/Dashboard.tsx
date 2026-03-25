@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import HealthRing from '@/components/dashboard/HealthRing';
 import StatusCard from '@/components/dashboard/StatusCard';
 import AlertBanner, { type Alert } from '@/components/dashboard/AlertBanner';
+import DailySummaries from '@/components/dashboard/DailySummaries';
 import { fetchPetStatus, checkOuraStatus, getAuthorizeUrl } from '@/lib/oura';
 import type { PetStatus } from '@/types';
 
@@ -196,6 +197,14 @@ export default function Dashboard() {
           </Card>
         ))}
       </div>
+
+      {/* Daily summaries */}
+      <DailySummaries
+        activityScore={activityScore}
+        steps={steps}
+        heartRate={heartRate}
+        temperature={temperature}
+      />
     </div>
   );
 }
