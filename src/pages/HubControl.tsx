@@ -5,6 +5,7 @@ import Schedule from '@/components/hub/Schedule';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import erbaoPreview from '@/assets/erbao-preview.jpeg';
 
 const CATEGORIES = [
   { label: '🐦 Birds', value: 'birds', videoId: 'xbs7FT7dXYc' },
@@ -101,23 +102,32 @@ export default function HubControl() {
           </div>
         </CardHeader>
         <CardContent className="flex flex-col items-center gap-4 py-6">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="size-8 text-muted-foreground"
-            >
-              <path d="m15 10 4.553-2.069A1 1 0 0 1 21 8.82v6.361a1 1 0 0 1-1.447.894L15 14" />
-              <rect x="3" y="6" width="12" height="12" rx="2" />
-            </svg>
+          <div className="relative w-full rounded-lg overflow-hidden">
+            <img
+              src={erbaoPreview}
+              alt="Erbao on cat monitor"
+              className="w-full h-48 object-cover opacity-80"
+            />
+            <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/90 shadow-lg">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="size-7 text-foreground"
+                >
+                  <path d="m15 10 4.553-2.069A1 1 0 0 1 21 8.82v6.361a1 1 0 0 1-1.447.894L15 14" />
+                  <rect x="3" y="6" width="12" height="12" rx="2" />
+                </svg>
+              </div>
+            </div>
           </div>
           <p className="text-sm text-muted-foreground text-center">
-            Video call your pet remotely — coming in a future update.
+            Video call Erbao remotely — coming in a future update.
           </p>
           <Button disabled>Start Call</Button>
         </CardContent>

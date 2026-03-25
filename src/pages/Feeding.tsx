@@ -6,21 +6,21 @@ import type { FeedingLog } from '@/types'
 const demoFeedings: FeedingLog[] = [
   {
     id: '1',
-    pet_id: 'luna',
+    pet_id: 'erbao',
     fed_at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
     food_type: 'Wet food - Chicken',
     notes: 'Ate about half the portion',
   },
   {
     id: '2',
-    pet_id: 'luna',
+    pet_id: 'erbao',
     fed_at: new Date(Date.now() - 9 * 60 * 60 * 1000).toISOString(),
     food_type: 'Dry kibble',
     notes: null,
   },
   {
     id: '3',
-    pet_id: 'luna',
+    pet_id: 'erbao',
     fed_at: new Date(Date.now() - 20 * 60 * 60 * 1000).toISOString(),
     food_type: 'Wet food - Tuna',
     notes: 'Finished everything!',
@@ -34,7 +34,7 @@ export default function Feeding() {
     const newEntry: FeedingLog = {
       ...entry,
       id: crypto.randomUUID(),
-      pet_id: 'luna',
+      pet_id: 'erbao',
     }
     setFeedings((prev) => [newEntry, ...prev])
   }

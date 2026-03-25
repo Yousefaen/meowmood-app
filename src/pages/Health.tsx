@@ -14,7 +14,7 @@ const HOURS_24 = Array.from({ length: 24 }, (_, i) => {
 
 const mock24hHeartRate: DataPoint[] = HOURS_24.map((time, i) => ({
   time,
-  // Luna rests at night (~55 bpm), active mid-morning and afternoon (~90-110 bpm)
+  // Erbao rests at night (~55 bpm), active mid-morning and afternoon (~90-110 bpm)
   value:
     i < 6
       ? Math.round(55 + Math.random() * 8)

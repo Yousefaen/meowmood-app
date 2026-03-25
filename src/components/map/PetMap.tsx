@@ -56,7 +56,7 @@ export default function PetMap({ showGeofence }: PetMapProps) {
         pathOptions={{ color: '#3b82f6', weight: 3, opacity: 0.8 }}
       />
       <Marker position={lastPosition} icon={defaultIcon}>
-        <Popup>Luna — Last seen: 5 min ago</Popup>
+        <Popup>Erbao — Last seen: 5 min ago</Popup>
       </Marker>
       <Geofence center={trailCenter} radius={200} visible={showGeofence} />
     </MapContainer>

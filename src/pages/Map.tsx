@@ -26,7 +26,7 @@ export default function Map() {
         <Card className="flex-1">
           <CardHeader>
             <CardTitle>Last Seen Location</CardTitle>
-            <CardDescription>Most recent GPS ping from Luna's tracker</CardDescription>
+            <CardDescription>Most recent GPS ping from Erbao's tracker</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col gap-1 text-sm">

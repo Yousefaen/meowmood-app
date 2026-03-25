@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
+import erbaoPfp from '@/assets/erbao-pfp.jpeg';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import HealthRing from '@/components/dashboard/HealthRing';
@@ -117,11 +118,9 @@ export default function Dashboard() {
     <div className="space-y-4">
       {/* Pet header */}
       <div className="flex items-center gap-3">
-        <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center text-2xl ring-2 ring-foreground/10">
-          🐱
-        </div>
+        <img src={erbaoPfp} alt="Erbao" className="w-12 h-12 rounded-full object-cover ring-2 ring-foreground/10" />
         <div>
-          <h2 className="text-xl font-semibold leading-none">Luna</h2>
+          <h2 className="text-xl font-semibold leading-none">Erbao</h2>
           <p className="text-sm text-muted-foreground mt-0.5">Live health overview</p>
         </div>
       </div>
@@ -154,7 +153,7 @@ export default function Dashboard() {
       <AlertBanner alerts={alerts} />
 
       {/* Status summary card */}
-      <StatusCard petName="Luna" status={petStatus} />
+      <StatusCard petName="Erbao" status={petStatus} />
 
       {/* Metric cards 2x2 grid */}
       <div className="grid grid-cols-2 gap-3">
