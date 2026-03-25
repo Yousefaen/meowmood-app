@@ -59,8 +59,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     );
 
   if (dbError) {
-    console.error('Failed to store token:', dbError);
-    return res.status(500).json({ error: 'Failed to store token' });
+    console.error('Failed to store token:', JSON.stringify(dbError));
+    return res.status(500).json({
+      error: 'Failed to store token',
+      details: dbError.message,
+      hint: dbError.hint || null,
+      code: dbError.code || null,
+      supabase_url_set: !!supabaseUrl,
+      service_key_set: !!supabaseKey,
+    });
   }
 
   // Redirect back to app
