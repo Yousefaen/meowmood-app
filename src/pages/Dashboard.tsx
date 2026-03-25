@@ -37,6 +37,14 @@ export default function Dashboard() {
       if (pet.bodyTemperature !== null) setTemperature(pet.bodyTemperature);
       if (pet.activityScore !== null) setActivityScore(pet.activityScore);
       if (pet.todaySteps !== null) setSteps(pet.todaySteps);
+      // Share with chat page via sessionStorage
+      sessionStorage.setItem('meowmood_pet_status', JSON.stringify({
+        heartRate: pet.currentHeartRate ?? 78,
+        temperature: pet.bodyTemperature ?? 101.8,
+        activityScore: pet.activityScore ?? 72,
+        steps: pet.todaySteps ?? 4823,
+        sleepStage: pet.sleepStage ?? 'awake',
+      }));
       setLastSynced(new Date());
       setLoading(false);
     });

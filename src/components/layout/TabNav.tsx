@@ -6,6 +6,7 @@ const tabs = [
   { to: '/map', label: 'Map', icon: '📍' },
   { to: '/feeding', label: 'Feeding', icon: '🍽️' },
   { to: '/hub', label: 'Cat TV', icon: '📺' },
+  { to: '/chat', label: 'AI Vet', icon: '🤖' },
 ];
 
 export default function TabNav() {

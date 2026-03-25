@@ -5,6 +5,7 @@ import Health from '@/pages/Health';
 import MapPage from '@/pages/Map';
 import Feeding from '@/pages/Feeding';
 import HubControl from '@/pages/HubControl';
+import Chat from '@/pages/Chat';
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
           <Route path="/map" element={<MapPage />} />
           <Route path="/feeding" element={<Feeding />} />
           <Route path="/hub" element={<HubControl />} />
+          <Route path="/chat" element={<Chat />} />
         </Route>
       </Routes>
     </BrowserRouter>
