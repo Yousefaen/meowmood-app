@@ -116,24 +116,34 @@ function mapSleepStage(sleep: OuraSleep | undefined): string {
 
 export async function fetchPetStatus(): Promise<PetStatus> {
   try {
-    const today = new Date().toISOString().split('T')[0];
-    const startDatetime = `${today}T00:00:00`;
-    const endDatetime = `${today}T23:59:59`;
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+
+    // Query the last 3 days so we always get data even if today isn't finalized yet
+    const threeDaysAgo = new Date(today);
+    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+    const startStr = threeDaysAgo.toISOString().split('T')[0];
+
+    // Heart rate: query today only (intraday data is available in near-real-time)
+    const startDatetime = `${todayStr}T00:00:00`;
+    const endDatetime = `${todayStr}T23:59:59`;
 
     const [heartRates, activities, readinesses, sleeps] = await Promise.all([
       fetchHeartRate(startDatetime, endDatetime),
-      fetchDailyActivity(today, today),
-      fetchDailyReadiness(today, today),
-      fetchSleep(today, today),
+      fetchDailyActivity(startStr, todayStr),
+      fetchDailyReadiness(startStr, todayStr),
+      fetchSleep(startStr, todayStr),
     ]);
 
+    // Heart rate: use the most recent sample
     const latestHr = heartRates.length > 0
       ? heartRates[heartRates.length - 1]
       : null;
 
-    const activity = activities[0] ?? null;
-    const readiness = readinesses[0] ?? null;
-    const sleep = sleeps[0] ?? undefined;
+    // Daily summaries: use the most recent entry (last in the array = most recent day)
+    const activity = activities.length > 0 ? activities[activities.length - 1] : null;
+    const readiness = readinesses.length > 0 ? readinesses[readinesses.length - 1] : null;
+    const sleep = sleeps.length > 0 ? sleeps[sleeps.length - 1] : undefined;
 
     const tempDeviation = readiness?.temperature_deviation ?? 0;
     const bodyTemperature = parseFloat((101.5 + tempDeviation).toFixed(2));
